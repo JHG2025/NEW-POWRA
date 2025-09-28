@@ -3631,4 +3631,66 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+
+<script>
+// Save form data to localStorage on change and restore on reload
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.querySelector("form"); 
+  if (!form) return;
+
+  // Load saved data
+  const savedData = localStorage.getItem("powraFormData");
+  if (savedData) {
+    const formData = JSON.parse(savedData);
+    for (const [name, value] of Object.entries(formData)) {
+      const field = form.elements[name];
+      if (!field) continue;
+
+      if (field.type === "checkbox" || field.type === "radio") {
+        if (Array.isArray(value)) {
+          if (field.length) {
+            [...field].forEach(f => f.checked = value.includes(f.value));
+          } else {
+            field.checked = value.includes(field.value);
+          }
+        } else {
+          field.checked = value;
+        }
+      } else if (field.type === "select-multiple") {
+        [...field.options].forEach(opt => opt.selected = value.includes(opt.value));
+      } else if (field.length && field[0].type === "radio") {
+        [...field].forEach(f => f.checked = value.includes(f.value));
+      } else {
+        field.value = value;
+      }
+    }
+  }
+
+  // Save data on every change
+  form.addEventListener("input", () => {
+    const data = {};
+    for (let el of form.elements) {
+      if (!el.name) continue;
+      if (el.type === "checkbox" || el.type === "radio") {
+        if (!data[el.name]) data[el.name] = [];
+        if (el.checked) data[el.name].push(el.value);
+      } else if (el.type === "select-multiple") {
+        data[el.name] = [...el.options].filter(o => o.selected).map(o => o.value);
+      } else {
+        data[el.name] = el.value;
+      }
+    }
+    localStorage.setItem("powraFormData", JSON.stringify(data));
+  });
+
+  // Clear storage when Clear button pressed
+  const clearBtn = document.getElementById("clearBtn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      localStorage.removeItem("powraFormData");
+    });
+  }
+});
+</script>
+
 </body></html>
